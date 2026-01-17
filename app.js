@@ -29,19 +29,28 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "/public")));
 
-// server side Validation check
-const { listingSchema } = require("./schema.js");
+// server side Validation check for - listings , reviews
+const { listingSchema, reviewSchema } = require("./schema.js");
 
-const validateListing = (req, res , next) => {
+const validateListing = (req, res, next) => {
   // validating based on schema
-    let {error} = listingSchema.validate(req.body);
-    if (error) {
-      throw new ExpressError(400, result.error);
-    }
-    else{
-      next();
-    }
+  let { error } = listingSchema.validate(req.body);
+  if (error) {
+    throw new ExpressError(400, result.error);
+  } else {
+    next();
+  }
+};
 
+const validateReview = (req, res, next) => {
+  // validating based on Schema
+  console.log(req.body);
+  let { error } = reviewSchema.validate(req.body);
+  if (error) {
+    throw new ExpressError(400, error);
+  } else {
+    next();
+  }
 };
 
 // ROUTE / API
@@ -68,7 +77,7 @@ app.get(
   "/listings/:id",
   wrapAsync(async (req, res) => {
     const { id } = req.params;
-    const listing = await Listing.findById(id);
+    const listing = await Listing.findById(id).populate("reviews");
     res.render("listings/show.ejs", { listing });
   })
 );
@@ -125,6 +134,39 @@ app.delete(
   })
 );
 
+// Phase 2 - reviews & Auth
+// 1. Post Review route
+// model
+const Review = require("./models/reviews.js");
+app.post(
+  "/listings/:id/reviews",
+  validateReview,
+  wrapAsync(async (req, res) => {
+    let listing = await Listing.findById(req.params.id);
+    let newReview = new Review(req.body);
+
+    listing.reviews.push(newReview);
+    await newReview.save();
+    await listing.save();
+    console.log("new review saved");
+
+    res.redirect(`/listings/${listing._id}`);
+  })
+);
+
+// 2. Delete Review Route
+app.delete(
+  "/listings/:id/reviews/:reviewId",
+  wrapAsync(async (req, res) => {
+    let { id, reviewId } = req.params;
+    // $pull pulls all the elements in an array that matches the value
+    await Listing.findByIdAndUpdate(id, {$pull: {reviews: reviewId}});
+    await Review.findById(reviewId);
+
+    res.redirect(`/listings/${id}`);
+  })
+);
+
 // generic response - page not found
 app.use((req, res, next) => {
   next(new ExpressError(404, "Page Not Found!"));
@@ -133,7 +175,7 @@ app.use((req, res, next) => {
 // Error Handeller
 app.use((err, req, res, next) => {
   let { statusCode = 500, message = "Something went wrong" } = err;
-  app.status(statusCode).render("error.ejs", { message });
+  res.status(statusCode).render("error.ejs", { message });
   // res.status(statusCode).send(message);
 });
 
