@@ -4,6 +4,13 @@ const methodOverride = require("method-override");
 const path = require("path");
 const app = express();
 const ExpressError = require("./utils/ExpressError.js");
+// Express session
+const session = require("express-session");
+const flash = require("connect-flash"); // connect flash to flash msgs onces something is done then remove when refreshed
+
+// Passport - Auth
+const passport = require("passport");
+const LocalStrategy = require("passport-local");
 
 // connect to db
 async function main() {
@@ -19,6 +26,7 @@ main()
 
 // DB Models
 const Listing = require("./models/listing.js");
+const User = require("./models/user.js");
 
 // ejs setups
 app.set("view engine", "ejs");
@@ -27,20 +35,71 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "/public")));
 
+// Session
+const sessionOptions = {
+  secret: "mysupersecretcode",
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // time in millisec - 1 week
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    httpOnly: true, // prevents cross scripting attacks
+  },
+};
+
+// MIDDLEWARES
+// session middleware
+app.use(session(sessionOptions));
+// flash middleware
+app.use(flash());
+
+// passport
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+// use static serialize and deserialize of model for passport session support
+passport.serializeUser(User.serializeUser()); // adds user info in session
+passport.deserializeUser(User.deserializeUser()); // removes info from session
+
 // ROUTE / API
 app.get("/", (req, res) => {
   res.send("ROOT");
 });
 
+// MIDDLEWARES
+// flash middleware
+app.use((req, res, next) => {
+  res.locals.success = req.flash("success");
+  res.locals.error = req.flash("error");
+  // console.log(res.locals.success)
+  next();
+});
+
+// // Demo user
+// app.get("/demouser", async (req, res) => {
+//   let fakeUser = new User({
+//     email: "student@gmail.com",
+//     username: "student"
+//   });
+
+//   // passport method to register a user - user , password , callback
+//   let registeredUser = await User.register(fakeUser, "helloWorld");
+//   res.send(registeredUser);
+// });
+
 // Phase 1 - Listing & UI
 // listing routes - using express routing
-const listings = require("./routes/listing.js");
-app.use("/listings", listings);
+const listingRoter = require("./routes/listing.js");
+app.use("/listings", listingRoter);
 
 // Phase 2 - reviews & Auth
 // Review routes - using express routing
-const reviews = require("./routes/review.js");
-app.use("/listings/:id/reviews", reviews);
+const reviewRoter = require("./routes/review.js");
+app.use("/listings/:id/reviews", reviewRoter);
+
+// Sign-in & Sign-up route
+const userRouter = require("./routes/user.js");
+app.use("/", userRouter);
 
 // generic response - page not found
 app.use((req, res, next) => {

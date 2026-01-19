@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-// importing 
+// importing
 const wrapAsync = require("../utils/wrapAsync.js");
 const ExpressError = require("../utils/ExpressError.js");
 
@@ -9,13 +9,13 @@ const ExpressError = require("../utils/ExpressError.js");
 const Listing = require("../models/listing.js");
 
 // server side Validation check for - listings , reviews
-const { listingSchema} = require("../schema.js");
+const { listingSchema } = require("../schema.js");
 
 const validateListing = (req, res, next) => {
   // validating based on schema
   let { error } = listingSchema.validate(req.body);
   if (error) {
-    throw new ExpressError(400,error);
+    throw new ExpressError(400, error);
   } else {
     next();
   }
@@ -27,7 +27,7 @@ router.get(
   wrapAsync(async (req, res) => {
     const allListings = await Listing.find({});
     res.render("listings/index.ejs", { allListings });
-  })
+  }),
 );
 
 // 3. New Route
@@ -41,8 +41,12 @@ router.get(
   wrapAsync(async (req, res) => {
     const { id } = req.params;
     const listing = await Listing.findById(id).populate("reviews");
+    if (!listing) {
+      req.flash("error", "Listing dose not Exist!");
+      res.redirect("/listings");
+    }
     res.render("listings/show.ejs", { listing });
-  })
+  }),
 );
 
 // 4. create route
@@ -61,8 +65,9 @@ router.post(
       location,
     });
     await newlisting.save();
+    req.flash("success", "New Listing Created!");
     res.redirect("/listings");
-  })
+  }),
 );
 
 // 5. Edit route
@@ -71,8 +76,12 @@ router.get(
   wrapAsync(async (req, res) => {
     const { id } = req.params;
     const listing = await Listing.findById(id);
+    if (!listing) {
+      req.flash("error", "Listing dose not Exist!");
+      res.redirect("/listings");
+    }
     res.render("listings/edit.ejs", { listing });
-  })
+  }),
 );
 
 // 6. Update route
@@ -82,8 +91,9 @@ router.put(
   wrapAsync(async (req, res) => {
     let { id } = req.params;
     await Listing.findByIdAndUpdate(id, { ...req.body });
+    req.flash("success", "Listing Updated!");
     res.redirect(`/listings/${id}`);
-  })
+  }),
 );
 
 // 7. Delete route
@@ -93,8 +103,9 @@ router.delete(
     let { id } = req.params;
     let deletedListing = await Listing.findByIdAndDelete(id);
     console.log(deletedListing);
+    req.flash("success", "Listing Deleted!");
     res.redirect("/listings");
-  })
+  }),
 );
 
 module.exports = router;
