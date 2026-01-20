@@ -71,21 +71,10 @@ app.get("/", (req, res) => {
 app.use((req, res, next) => {
   res.locals.success = req.flash("success");
   res.locals.error = req.flash("error");
-  // console.log(res.locals.success)
+  res.locals.currUser = req.user;   // storing login user info in res.locals
   next();
 });
 
-// // Demo user
-// app.get("/demouser", async (req, res) => {
-//   let fakeUser = new User({
-//     email: "student@gmail.com",
-//     username: "student"
-//   });
-
-//   // passport method to register a user - user , password , callback
-//   let registeredUser = await User.register(fakeUser, "helloWorld");
-//   res.send(registeredUser);
-// });
 
 // Phase 1 - Listing & UI
 // listing routes - using express routing
