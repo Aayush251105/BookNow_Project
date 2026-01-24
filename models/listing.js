@@ -7,10 +7,12 @@ const listingSchema = new mongoose.Schema({
   },
   description: String,
   image: {
-    type: String,
-    default: "https://i.sstatic.net/y9DpT.jpg",
-    //setting value to default if it is empty
-    set: (v) => (v === "" ? "https://i.sstatic.net/y9DpT.jpg" : v),
+    // type: String,
+    // default: "https://i.sstatic.net/y9DpT.jpg",
+    // //setting value to default if it is empty
+    // set: (v) => (v === "" ? "https://i.sstatic.net/y9DpT.jpg" : v),
+    url: String,
+    filename: String,
   },
   price: Number,
   location: String,
