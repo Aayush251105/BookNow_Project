@@ -1,7 +1,7 @@
 // .env
-if(process.env.NODE_ENV != "production"){
-  require('dotenv').config();
-};
+if (process.env.NODE_ENV != "production") {
+  require("dotenv").config();
+}
 
 const express = require("express");
 const mongoose = require("mongoose");
@@ -11,6 +11,8 @@ const app = express();
 const ExpressError = require("./utils/ExpressError.js");
 // Express session
 const session = require("express-session");
+// Connect-mongo session
+const MongoStore = require("connect-mongo").default;
 const flash = require("connect-flash"); // connect flash to flash msgs onces something is done then remove when refreshed
 
 // Passport - Auth
@@ -18,8 +20,9 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local");
 
 // connect to db
+// connect to mongoDb Atlas
 async function main() {
-  await mongoose.connect("mongodb://127.0.0.1:27017/booknow");
+  await mongoose.connect(process.env.ATLASDB_URL);
 }
 main()
   .then(() => {
@@ -40,11 +43,24 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "/public")));
 
-
-
 // Session
+// Mongo store
+const store = MongoStore.create({
+  mongoUrl: process.env.ATLASDB_URL,
+  crypto: {
+    secret: process.env.SECRET,
+  },
+  touchAfter: 24 * 3600,
+});
+
+store.on("error", () => {
+  console.log("Error in NONGO SESSION STORE", err);
+})
+
+// Express - session
 const sessionOptions = {
-  secret: "mysupersecretcode",
+  store,  //connect Mongo store
+  secret: process.env.SECRET,
   resave: false,
   saveUninitialized: true,
   cookie: {
@@ -78,10 +94,9 @@ passport.deserializeUser(User.deserializeUser()); // removes info from session
 app.use((req, res, next) => {
   res.locals.success = req.flash("success");
   res.locals.error = req.flash("error");
-  res.locals.currUser = req.user;   // storing login user info in res.locals
+  res.locals.currUser = req.user; // storing login user info in res.locals
   next();
 });
-
 
 // Phase 1 - Listing & UI
 // listing routes - using express routing
