@@ -36,6 +36,9 @@ router
 // 3. New Route
 router.get("/new", isLoggedIn, listingController.renderNewForm);
 
+// 8. Search route 
+router.get("/destination", listingController.searchListing);
+
 // Show route , Update route , delete route.
 router
   .route("/:id")
@@ -57,36 +60,7 @@ router.get(
   wrapAsync(listingController.renderEditForm),
 );
 
-// // 1. index route
-// router.get("/", wrapAsync(listingController.index));
-
-// // 2. show route
-// router.get("/:id", wrapAsync(listingController.showListing));
-
-// // 4. create route
-// // using error handeller & asyncWrap
-// router.post(
-//   "/",
-//   isLoggedIn,
-//   validateListing,
-//   wrapAsync(listingController.createListing),
-// );
-
-// // 6. Update route
-// router.put(
-//   "/:id",
-//   isLoggedIn,
-//   isOwner,
-//   validateListing,
-//   wrapAsync(listingController.updateListings),
-// );
-
-// // 7. Delete route
-// router.delete(
-//   "/:id",
-//   isLoggedIn,
-//   isOwner,
-//   wrapAsync(listingController.destroyListing),
-// );
+// 9. Filter route
+router.get("/filter/:id", listingController.filterListing);
 
 module.exports = router;

@@ -1,8 +1,8 @@
 const Listing = require("../models/listing");
 // mapbox sdk
-const mbxGeocoding = require('@mapbox/mapbox-sdk/services/tilesets');
+const mbxGeocoding = require("@mapbox/mapbox-sdk/services/geocoding");
 const mapToken = process.env.MAP_TOKEN;
-const geocodingClient = mbxClient({ accessToken: mapToken });
+const geocodingClient = mbxGeocoding({ accessToken: mapToken });
 
 // saving all the callbacks
 
@@ -39,9 +39,17 @@ module.exports.showListing = async (req, res) => {
 
 //  4. Create route
 module.exports.createListing = async (req, res, next) => {
+  // Geo Coding
+  let response = await geocodingClient
+    .forwardGeocode({
+      query: req.body.location,
+      limit: 1,
+    })
+    .send();
+
   let url = req.file.path;
   let filename = req.file.filename;
-  let { title, description, image, price, country, location } = req.body;
+  let { title, description, image, price, country, location, category } = req.body;
   const newlisting = new Listing({
     title,
     description,
@@ -49,10 +57,14 @@ module.exports.createListing = async (req, res, next) => {
     price,
     country,
     location,
+    category
   });
   newlisting.owner = req.user._id;
   newlisting.image = { url, filename };
-  await newlisting.save();
+  // GeoCoordinates
+  newlisting.geometry = response.body.features[0].geometry;
+  let savedListing = await newlisting.save();
+  console.log(savedListing);
   req.flash("success", "New Listing Created!");
   res.redirect("/listings");
 };
@@ -74,13 +86,13 @@ module.exports.renderEditForm = async (req, res) => {
 // 6. Update route
 module.exports.updateListings = async (req, res) => {
   let { id } = req.params;
-  let listing = await Listing.findByIdAndUpdate(id, { ...req.body});
+  let listing = await Listing.findByIdAndUpdate(id, { ...req.body });
 
-  if(typeof req.file !== "undefined"){
+  if (typeof req.file !== "undefined") {
     let url = req.file.path;
     let filename = req.file.filename;
-  
-    listing.image = {url,filename};
+
+    listing.image = { url, filename };
     await listing.save();
   }
   req.flash("success", "Listing Updated!");
@@ -95,3 +107,23 @@ module.exports.destroyListing = async (req, res) => {
   req.flash("success", "Listing Deleted!");
   res.redirect("/listings");
 };
+
+//  8. Search Route
+module.exports.searchListing = async(req,res) => {
+  let name = req.query.search;
+  let allListings = await Listing.find({country: name});
+  res.render("listings/search.ejs", {allListings , name})
+}
+
+// 9. filter route
+module.exports.filterListing = async(req,res)=> {
+  let {id} = req.params;
+  id = id.replaceAll("+"," ")
+  // console.log(id);
+  const allListings = await Listing.find({category: id});
+  // console.log(allListings);
+  if(!allListings){
+    allListings = [];
+  }
+  res.render("listings/index.ejs", {allListings});
+}

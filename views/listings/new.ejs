@@ -60,8 +60,27 @@
 
       <div class="mb-3">
          <label for="location" class="form-label">Loacation</label>
-      <input placeholder="Enter location" type="text" name="location" id="" class="form-control" required/>
+      <input placeholder="Hyderabad, India" type="text" name="location" id="" class="form-control" required/>
       <div class="invalid-feedback">Enter a valid Location</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="category" class="form-label">Category</label>
+        <select name="category" id="category" class="form-control" required>
+          <option value="" disabled selected>-- Select Category --</option>
+          <option value="Trending">Trending</option>
+          <option value="Rooms">Rooms</option>
+          <option value="Iconic cities">Iconic cities</option>
+          <option value="Mountains">Mountains</option>
+          <option value="Amazing Pools">Amazing Pools</option>
+          <option value="Camping">Camping</option>
+          <option value="Farms">Farms</option>
+          <option value="Castles">Castles</option>
+          <option value="Arctic">Arctic</option>
+          <option value="Domes">Domes</option>
+          <option value="Boats">Boats</option>
+        </select>
+        <div class="invalid-feedback">Enter a valid Category</div>
       </div>
 
       <button class="btn btn-dark add-btn mt-3">Add</button>

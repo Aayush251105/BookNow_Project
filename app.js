@@ -69,9 +69,9 @@ passport.serializeUser(User.serializeUser()); // adds user info in session
 passport.deserializeUser(User.deserializeUser()); // removes info from session
 
 // ROUTE / API
-app.get("/", (req, res) => {
-  res.send("ROOT");
-});
+// app.get("/", (req, res) => {
+//   res.send("ROOT");
+// });
 
 // MIDDLEWARES
 // flash middleware
