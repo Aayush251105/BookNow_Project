@@ -1,4 +1,8 @@
 const Listing = require("../models/listing");
+// mapbox sdk
+const mbxGeocoding = require('@mapbox/mapbox-sdk/services/tilesets');
+const mapToken = process.env.MAP_TOKEN;
+const geocodingClient = mbxClient({ accessToken: mapToken });
 
 // saving all the callbacks
 
